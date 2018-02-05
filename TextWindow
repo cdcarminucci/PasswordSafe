@@ -1,0 +1,125 @@
+package passwordsafe;
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+
+/**
+ * Creates the text window which takes password inputs and retrieval requests
+ * 
+ * password input format: Password,Identifier,Code
+ * retrieval format: Identifier,Code
+ * 
+ * To do: 
+ * save list on exit
+ * better GUI and input format
+ * 
+ * @author Christian Carminucci
+ * @version 2018.01.28
+ */
+public class TextWindow extends JPanel implements ActionListener {
+    protected JTextArea textArea;
+    protected JTextField passField;
+    protected JTextField searchField;
+    private Button clear;
+    private final static String newline = "\n";
+    private Encrypter crypt;
+
+
+    /**
+     * Sets up the input textFields and the output textArea within the window
+     */
+    public TextWindow() {
+        super(new GridBagLayout());
+        passField = new JTextField(20);
+        passField.addActionListener(this);
+        searchField = new JTextField(20);
+        searchField.addActionListener(this);
+
+        crypt = new Encrypter();
+
+        textArea = new JTextArea(5, 20);
+        textArea.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(textArea);
+
+        clear = new Button("clear");
+        clear.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent arg0) {
+                textArea.append(crypt.clear() + newline);
+
+            }
+        });
+
+
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridwidth = GridBagConstraints.REMAINDER;
+
+        c.fill = GridBagConstraints.HORIZONTAL;
+        add(passField, c);
+        add(searchField, c);
+
+        c.fill = GridBagConstraints.BOTH;
+        c.weightx = 1.0;
+        c.weighty = 1.0;
+        add(scrollPane, c);
+
+        add(clear, c);
+
+    }
+
+
+    /**
+     * Action listener for the input fields
+     */
+    @Override
+    public void actionPerformed(ActionEvent arg0) {
+        if (passField.getText().length() > 0) {
+            String passText = passField.getText();
+            int break1 = passText.indexOf(",");
+            String password = passText.substring(0, break1);
+            String sub = passText.substring(break1 + 1);
+            int break2 = sub.indexOf(",");
+            String identifier = sub.substring(0, break2);
+            String code = sub.substring(break2 + 1);
+            String result = crypt.add(password, identifier, code);
+            textArea.append(result + newline);
+            passField.setText("");
+        }
+        if (searchField.getText().length() > 0) {
+            String searchText = searchField.getText();
+            int searchBreak = searchText.indexOf(",");
+            String search = searchText.substring(0, searchBreak);
+            String searchCode = searchText.substring(searchBreak + 1);
+
+            textArea.append(crypt.getPassword(search, searchCode) + newline);
+
+        }
+
+    }
+
+
+    /**
+     * Creates window frame
+     */
+    private static void createAndShowGUI() {
+        JFrame frame = new JFrame("Password Safe");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        frame.add(new TextWindow());
+
+        frame.pack();
+        frame.setVisible(true);
+
+    }
+
+
+    public static void main(String[] args) {
+        javax.swing.SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                createAndShowGUI();
+            }
+        });
+    }
+
+}
