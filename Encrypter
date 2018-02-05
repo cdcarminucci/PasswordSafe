@@ -1,0 +1,197 @@
+package passwordsafe;
+
+import java.util.LinkedList;
+
+/**
+ * Alters and saves passwords based on encryption code and
+ * @author Christian Carminucci
+ * @version 2018.01.25
+ *
+ */
+public class Encrypter {
+    private LinkedList<String> list;
+    
+    /**
+     * creates the list to be used
+     */
+    public Encrypter()
+    {
+        list = new LinkedList<String>();
+    }
+    
+    /**
+     * retrieves list of scrambled passwords
+     * @return password list
+     */
+    public LinkedList<String> getList()
+    {
+        return list;
+    }
+    
+    /**
+     * Scrambles then adds password to lists
+     * @param password password string to be added
+     * @param identifier identifies where password is used (i.e. website name)
+     * @param code "code for the safe": string used to scramble and unscramble password
+     * @return returns "added" if password is successfully added to list and "duplicate" if it already exists
+     */
+    public String add(String password, String identifier, String code)
+    {
+        StringBuilder builder = new StringBuilder();
+        builder.append(identifier);
+        builder.append(": ");
+        builder.append(encrypt(password, code));
+        if (list.contains(builder.toString()))
+        {
+            return "duplicate";
+        }
+        list.add(builder.toString());
+        return "added";
+    }
+
+    /**
+     * Encrypts password using the safe code
+     * @param password password string 
+     * @param code code string
+     * @return The scrambled string to be added to the list
+     */
+    private String encrypt(String password, String code) {
+
+        return reverse(combine(password, reverse(code)));
+    }
+    
+    /**
+     * Reverses the order of the given string
+     * @param string string to be reversed
+     * @return reversed string
+     */
+    private String reverse(String string) {
+        StringBuilder rev = new StringBuilder();
+        for (int i = string.length() - 1; i >= 0; i--)
+        {
+            rev.append(string.charAt(i));
+        }
+        return rev.toString();
+    }
+
+    /**
+     * Combines two strings by merging them (i.e. abcd + efgh = aebfcgdh)
+     * @param password the entered password 
+     * @param code the entered code
+     * @return the combined string
+     */
+    private String combine(String password, String code)
+    {
+        StringBuilder combo = new StringBuilder();
+        if (password.length() >= code.length())
+        {
+            for (int i = 0; i < code.length(); i++)
+            {
+                combo.append(password.charAt(i));
+                combo.append(code.charAt(i));
+            }
+            combo.append(password.substring(code.length()));
+        }
+        if (password.length() < code.length())
+        {
+            for (int i = 0; i < password.length(); i++)
+            {
+                combo.append(password.charAt(i));
+                combo.append(code.charAt(i));
+            }
+            combo.append(code.substring(password.length()));
+        }
+        return combo.toString();
+    }
+    
+    /**
+     * Retrieves the desired password from the safe unscrambled if the code is correct
+     * @param identifier the identifier for the password 
+     * @param code the safe code
+     * @return the password that matches the identifier or no match if the identifier is incorrect
+     */
+    public String getPassword(String identifier, String code)
+    {
+        StringBuilder bud = new StringBuilder();
+        bud.append(identifier);
+        bud.append(": ");
+        for (int  i = 0; i < list.size(); i++)
+        {
+            if (list.get(i).contains(bud.toString()))
+            {
+                String pass = list.get(i).substring(bud.length());
+                return decode(pass, code);
+            }
+        }
+        return "no match";
+    }
+
+    /**
+     * Decodes the string
+     * @param substring the scrambled string retrieved from the list
+     * @param code the safe code
+     * @return the unscrambled password
+     */
+    private String decode(String substring, String code) {
+        
+        return extract(reverse(substring), reverse(code));
+    }
+
+    /**
+     * extracts the code from the scrambled merged string
+     * @param string the merged string 
+     * @param code the safe code 
+     * @return the string that was merged with the safe code or "incorrect code" if the code is wrong
+     */
+    private String extract(String string, String code) 
+    {
+        String ret = string;
+        if (string.length() / 2 >= code.length())
+        {
+            int b = 1;
+            for (int i = 0; i < code.length(); i++)
+            {
+                if (ret.charAt(b) == code.charAt(i))
+                {
+                    ret = ret.substring(0, b) + ret.substring(b + 1);
+                    b++;
+                }
+                else {
+                    return "incorrect code";
+                }
+                
+                
+            }
+        }
+        else if (string.length() / 2 < code.length())
+        {
+            int a = 1;
+            for (int i = 0; i < string.length() - code.length(); i++)
+            {
+                if (ret.charAt(a) == code.charAt(i))
+                {
+                    ret = ret.substring(0, a) + ret.substring(a + 1);
+                    a++;
+                }
+                else {
+                    return "incorrect code";
+                }
+            }
+            ret = ret.substring(0, string.length() - code.length());
+        }
+        
+        return ret;
+    }
+    
+    
+    /**
+     * Clears the safe/list of all saved passwords
+     * @return "clear" for use with window output
+     */
+    public String clear()
+    {
+        list.clear();
+        return "clear";
+    }
+
+}
